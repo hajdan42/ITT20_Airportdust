@@ -59,6 +59,7 @@ def generate_n_i(engine_number: int, lower_limit: int = 100):
     # n_i = [(top_airports_from[airport_code] if airport_code in
     # top_airports_from.keys() else 0) for airport_code in AIRPORTS]
     ind_0, ind_1, data = [], [], []
+    total_flights = sum(list(top_airports_from.values()))
     for i, airport_code in enumerate(AIRPORTS):
         if airport_code in top_airports_from:
             ind_0 += [5 * (engine_number - 1),
@@ -71,9 +72,7 @@ def generate_n_i(engine_number: int, lower_limit: int = 100):
                       5 * i + 2,
                       5 * i + 3,
                       5 * i + 4]
-            data += 5 * [top_airports_from[airport_code]]
-
-    data = list(np.array(data) / sum(list(top_airports_from.values())))
+            data += 5 * [float(top_airports_from[airport_code]) / float(total_flights)]
 
     return ind_0, ind_1, data
 
@@ -97,8 +96,13 @@ def generate_y() -> np.ndarray:
     return y
 
 
-A = generate_a()
+A = generate_a(lower_limit=50)
 b = generate_y()
 
+x_pure_data = GROUND_TRUTH.drop('Airports', axis='columns')
+x_pure_data = x_pure_data.to_numpy()
+
 x = ss.linalg.lsqr(A, b)[0]
-print(x)
+x = np.atleast_2d(x).reshape((-1, 5), order="C")
+
+print(np.linalg.norm(x - x_pure_data))
