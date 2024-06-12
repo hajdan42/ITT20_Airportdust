@@ -178,7 +178,7 @@ plt.show()
 
 print(np.linalg.norm(x - x_pure_data))
 
-# Section: Sklearn L2 regularisation
+# Section: NNLS
 
 x = so.nnls(A, b.flatten())
 print(x)

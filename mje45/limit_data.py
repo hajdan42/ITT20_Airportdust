@@ -10,7 +10,7 @@ import warnings
 DATA = pd.read_csv('../data/flight_log.csv', keep_default_na=False)
 GROUND_TRUTH = pd.read_csv('../data/ground_truth.csv', keep_default_na=False)
 Y_DATA = pd.read_csv('../data/engines.csv', keep_default_na=False)
-LOWER_LIMIT = 250
+LOWER_LIMIT = 350
 NO_ENGINES = len(pd.unique(DATA['Engine No']))
 
 
@@ -73,43 +73,23 @@ AIRPORTS = extract_all_airports()
 VALID_AIRPORTS = valid_airports(lower_limit=LOWER_LIMIT)
 
 
-def generate_n_i(engine_number: int, lower_limit: int = 100):
+def generate_n_i(engine_number: int, lower_limit: int = 100) -> typing.Optional[list]:
     top_airports_from, _ = top_airport_dict(engine_number, lower_limit)
     n_i = [(top_airports_from[airport_code] if (airport_code in top_airports_from) else 0) for airport_code in VALID_AIRPORTS]
-    n_i = list(np.array(n_i) / sum(n_i))
 
-    # ind_0, ind_1, data = [], [], []
-    # total_flights = sum(list(top_airports_from.values()))
-    # for i, airport_code in enumerate(VALID_AIRPORTS):
-    #     if airport_code in top_airports_from:
-    #         ind_0 += [5 * (engine_number - 1),
-    #                   5 * (engine_number - 1) + 1,
-    #                   5 * (engine_number - 1) + 2,
-    #                   5 * (engine_number - 1) + 3,
-    #                   5 * (engine_number - 1) + 4]
-    #         ind_1 += [5 * i,
-    #                   5 * i + 1,
-    #                   5 * i + 2,
-    #                   5 * i + 3,
-    #                   5 * i + 4]
-    #         data += 5 * [float(top_airports_from[airport_code]) / float(total_flights)]
-    #
-    # return ind_0, ind_1, data
+    if s_i := sum(n_i):
+        n_i = list(np.array(n_i) / s_i)
+    else:
+        Y_DATA.drop(axis=0, labels=engine_number)
     return n_i
 
 
 def generate_a(lower_limit: int = 100):
-    # ind_0, ind_1, data = [], [], []
-    # no_engines = len(pd.unique(DATA['Engine No']))
-    # for engine_no in pd.unique(DATA['Engine No']):
-    #     id0, id1, _data = generate_n_i(engine_no, lower_limit)
-    #     ind_0 += id0
-    #     ind_1 += id1
-    #     data += _data
-    #
-    # return ss.csr_matrix((data, (ind_0, ind_1)), shape=(5 * no_engines, 5 * len(VALID_AIRPORTS)))
-    generator = (np.kron(generate_n_i(i+1, lower_limit), np.eye(5, dtype=int)) for i in range(NO_ENGINES))
-    a = np.vstack(generator)
+    a = np.kron(generate_n_i(1, lower_limit), np.eye(5, dtype=int))  # could be shite
+    for i in range(NO_ENGINES - 1):
+        if (n_i := generate_n_i(i+2, lower_limit)) is not None:
+            a = np.concatenate((a, np.kron(n_i, np.eye(5, dtype=int))), axis=0)
+
     return a
 
 
@@ -120,10 +100,14 @@ def generate_y() -> np.ndarray:
     return y
 
 
+print(DATA['Engine No'].value_counts())
+
 warnings.filterwarnings('ignore', '', FutureWarning)
 
 A = generate_a(lower_limit=LOWER_LIMIT)
 b = generate_y()
+
+print(A.shape, A.sum(axis=1))
 
 plt.imshow(A)
 plt.show()
@@ -171,19 +155,6 @@ res = so.minimize(statement, x_0, bounds=bounds, constraints=cons)
 
 x = res.x
 x = np.atleast_2d(x).reshape((-1, 5), order="C")
-
-plt.imshow(np.abs(x - x_pure_data))
-plt.colorbar()
-plt.show()
-
-print(np.linalg.norm(x - x_pure_data))
-
-# Section: Sklearn L2 regularisation
-
-x = so.nnls(A, b.flatten())
-print(x)
-
-x = np.atleast_2d(x[0]).reshape((-1, 5), order="C")
 
 plt.imshow(np.abs(x - x_pure_data))
 plt.colorbar()
