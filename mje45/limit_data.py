@@ -136,10 +136,10 @@ b = generate_y()
 print("Shape of A:")
 print(A.shape, A.sum(axis=1))
 
-# plt.title("Structure of A (Elements)")
-# plt.imshow(A)
-# plt.colorbar()
-# plt.show()
+plt.title("Structure of A (Elements)")
+plt.imshow(A)
+plt.colorbar()
+plt.show()
 
 mask = GROUND_TRUTH['Airports'].isin(VALID_AIRPORTS)
 x_pure_data = GROUND_TRUTH[mask]
@@ -153,7 +153,7 @@ x_pure_data = x_pure_data.to_numpy()
 # condition in a constrained optimisation solver.
 
 x_out = np.linalg.pinv(A) @ b
-x = np.atleast_2d(x_out).reshape((-1, 5), order="C")
+# x = np.atleast_2d(x_out).reshape((-1, 5), order="C")
 
 # plt.title("Pseudo-inverse Solution: \nabsolute errors [%]")
 # plt.xticks(range(5), ["C", "M", "A", "S", "O"])
@@ -184,9 +184,10 @@ x = res.x
 x = np.atleast_2d(x).reshape((-1, 5), order="C")
 
 abs_errors = np.abs(x - x_pure_data)
+# abs_errors = (x - x_pure_data) / x
 
 
-fig = plt.figure(layout="constrained")
+fig = plt.figure(layout="constrained", figsize=(12, 6))
 subfigs = fig.subfigures(1, 2, wspace=0.07, width_ratios=[0.5, 1.])
 
 
@@ -200,55 +201,46 @@ a_cont = abs_errors[:, 2]
 s_cont = abs_errors[:, 3]
 
 kdec = sm.nonparametric.KDEUnivariate(c_cont)
-kdec.fit(clip=(0, np.inf))
+# kdec.fit(clip=(0, np.inf))
+kdec.fit()
 
 axs0[0, 0].hist(c_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[0, 0].plot(kdec.support, kdec.density, color="#5AB4DC")
-axs0[0, 0].annotate("C", xy=(1, 1), color="green", style="italic")
+axs0[0, 0].annotate("C", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdem = sm.nonparametric.KDEUnivariate(m_cont)
-kdem.fit(clip=(0, np.inf))
+# kdem.fit(clip=(0, np.inf))
+kdem.fit()
 
 axs0[0, 1].hist(m_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[0, 1].plot(kdem.support, kdem.density, color="#5AB4DC")
-axs0[0, 1].annotate("M", xy=(1, 1), color="green", style="italic")
+axs0[0, 1].annotate("M", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdea = sm.nonparametric.KDEUnivariate(a_cont)
-kdea.fit(clip=(0, np.inf))
+# kdea.fit(clip=(0, np.inf))
+kdea.fit()
 
 axs0[1, 0].hist(a_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[1, 0].plot(kdea.support, kdea.density, color="#5AB4DC")
-axs0[1, 0].annotate("A", xy=(1, 1), color="green", style="italic")
+axs0[1, 0].annotate("A", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdes = sm.nonparametric.KDEUnivariate(s_cont)
-kdes.fit(clip=(0, np.inf))
+# kdes.fit(clip=(0, np.inf))
+kdes.fit()
 
 axs0[1, 1].hist(s_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[1, 1].plot(kdes.support, kdes.density, color="#5AB4DC")
-axs0[1, 1].annotate("S", xy=(1, 1), color="green", style="italic")
-
-
-
-
-
-
-
-
-
-
-
-
-
+axs0[1, 1].annotate("S", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 axs1 = subfigs[0].subplots(1, 1)
-subfigs[0].supylabel('Airports')
 
 axs1.set_title("Contrained Optimisation Solution: \nabsolute errors [%]")
 axs1.set_xticks(range(5), ["C", "M", "A", "S", "O"])
 axs1.set_yticks(range(len(VALID_AIRPORTS)), VALID_AIRPORTS)
+axs1.set_ylabel('Airports')
 image = axs1.imshow(abs_errors)
 subfigs[0].colorbar(image)
 
