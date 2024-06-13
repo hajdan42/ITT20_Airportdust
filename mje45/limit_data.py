@@ -128,6 +128,9 @@ x = np.atleast_2d(x_out).reshape((-1, 5), order="C")
 print("x vector:", x)
 
 
+plt.title("Absolute error of $x$")
+plt.xlabel("Dust concentration types")
+plt.ylabel("Airports")
 plt.imshow(np.abs(x - x_pure_data))
 plt.colorbar()
 plt.show()
