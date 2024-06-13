@@ -107,9 +107,12 @@ warnings.filterwarnings('ignore', '', FutureWarning)
 A = generate_a(lower_limit=LOWER_LIMIT)
 b = generate_y()
 
-print(A.shape, A.sum(axis=1))
+print("Shape of A:")
+print(A.shape, A.sum(axis=1)) # check if summed to 1?
 
+plt.title("Structure of A (Elements)")
 plt.imshow(A)
+plt.colorbar()
 plt.show()
 
 mask = GROUND_TRUTH['Airports'].isin(VALID_AIRPORTS)
@@ -122,7 +125,8 @@ x_pure_data = x_pure_data.to_numpy()
 x_out = np.linalg.pinv(A) @ b
 x = np.atleast_2d(x_out).reshape((-1, 5), order="C")
 
-print(x)
+print("x vector:", x)
+
 
 plt.imshow(np.abs(x - x_pure_data))
 plt.colorbar()
@@ -156,6 +160,11 @@ res = so.minimize(statement, x_0, bounds=bounds, constraints=cons)
 x = res.x
 x = np.atleast_2d(x).reshape((-1, 5), order="C")
 
+
+plt.yticks(np.arange(1, 20, 1.0))
+plt.yticks(np.arange(1, 20, 1.0))
+plt.xlabel("Dust concentration types")
+plt.ylabel("Airports (20)")
 plt.imshow(np.abs(x - x_pure_data))
 plt.colorbar()
 plt.show()
