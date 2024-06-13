@@ -98,7 +98,7 @@ def generate_n_i(engine_number: int, lower_limit: int = 100) -> typing.Optional[
     if s_i := sum(n_i):
         n_i = list(np.array(n_i) / s_i)
     else:
-        Y_DATA.drop(axis=0, labels=engine_number)
+        return None
     return n_i
 
 
@@ -108,12 +108,16 @@ def generate_a(lower_limit: int = 100):
     :param lower_limit: (int) represents the least number of flights one needs before deeming an airport significant.
     :return:
     """
+    list_remove = []
     a = np.kron(generate_n_i(1, lower_limit), np.eye(5, dtype=int))  # could be shite
     for i in range(NO_ENGINES - 1):
         if (n_i := generate_n_i(i+2, lower_limit)) is not None:
             a = np.concatenate((a, np.kron(n_i, np.eye(5, dtype=int))), axis=0)
+        else:
+            # Y_DATA.drop(axis=0, labels=engine_number)
+            list_remove.append(i+2)
 
-    return a
+    return a, list_remove
 
 
 def generate_y() -> np.ndarray:
@@ -130,7 +134,8 @@ def generate_y() -> np.ndarray:
 print(DATA['Engine No'].value_counts())
 warnings.filterwarnings('ignore', '', FutureWarning)
 
-A = generate_a(lower_limit=LOWER_LIMIT)
+A, list_remove = generate_a(lower_limit=LOWER_LIMIT)
+Y_DATA = Y_DATA[~Y_DATA['Engine No'].isin(list_remove)]
 b = generate_y()
 
 print("Shape of A:")
@@ -206,7 +211,7 @@ kdec.fit()
 
 axs0[0, 0].hist(c_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[0, 0].plot(kdec.support, kdec.density, color="#5AB4DC")
-axs0[0, 0].annotate("C", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
+axs0[0, 0].annotate(r'$CaO$', xy=(0.8, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdem = sm.nonparametric.KDEUnivariate(m_cont)
@@ -215,7 +220,7 @@ kdem.fit()
 
 axs0[0, 1].hist(m_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[0, 1].plot(kdem.support, kdem.density, color="#5AB4DC")
-axs0[0, 1].annotate("M", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
+axs0[0, 1].annotate(r'$MgO$', xy=(0.8, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdea = sm.nonparametric.KDEUnivariate(a_cont)
@@ -224,7 +229,8 @@ kdea.fit()
 
 axs0[1, 0].hist(a_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[1, 0].plot(kdea.support, kdea.density, color="#5AB4DC")
-axs0[1, 0].annotate("A", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
+axs0[1, 0].annotate(r'$Al_2O_3$', xy=(0.8, 0.9),
+                    xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 
 kdes = sm.nonparametric.KDEUnivariate(s_cont)
@@ -233,11 +239,11 @@ kdes.fit()
 
 axs0[1, 1].hist(s_cont, density=True, bins=15, alpha=0.5, color="#D58817")
 axs0[1, 1].plot(kdes.support, kdes.density, color="#5AB4DC")
-axs0[1, 1].annotate("S", xy=(0.9, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
+axs0[1, 1].annotate(r'$SiO_2$', xy=(0.8, 0.9), xycoords='axes fraction', style="normal", weight="bold", size=15)
 
 axs1 = subfigs[0].subplots(1, 1)
 
-axs1.set_title("Contrained Optimisation Solution: \nabsolute errors [%]")
+axs1.set_title("Contrained Optimisation Solution: \nrelative errors")
 axs1.set_xticks(range(5), ["C", "M", "A", "S", "O"])
 axs1.set_yticks(range(len(VALID_AIRPORTS)), VALID_AIRPORTS)
 axs1.set_ylabel('Airports')
