@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import scipy.sparse as ss
 import scipy.optimize as so
 import typing
-import matplotlib.pyplot
 import warnings
+import statsmodels.api as sm
 
 DATA = pd.read_csv('../data/flight_log.csv', keep_default_na=False)
 GROUND_TRUTH = pd.read_csv('../data/ground_truth.csv', keep_default_na=False)
@@ -52,11 +51,21 @@ def top_airport_dict(engine_number: int, lower_limit: int = 100) -> typing.Tuple
 
 
 def extract_all_airports():
+    """
+    Extracts the full list of airports availible
+    :return:
+    """
     airports = list(GROUND_TRUTH['Airports'])
     return airports
 
 
 def valid_airports(lower_limit: int = 100) -> typing.List[str]:
+    """
+    From a given lower limit, we take all the airports from all engines which have at least ```lower_limit``` number of
+    flights from.
+    :param lower_limit: (int) represents the least number of flights one needs before deeming an airport significant.
+    :return: List of airports of form ```typing.List[str]```
+    """
     considered_airports = set()
     for i in range(NO_ENGINES):
         top_from, _ = top_airport_dict(i, lower_limit)
@@ -74,8 +83,17 @@ VALID_AIRPORTS = valid_airports(lower_limit=LOWER_LIMIT)
 
 
 def generate_n_i(engine_number: int, lower_limit: int = 100) -> typing.Optional[list]:
+    """
+    For a given engine and lower limit, this calculates the distribution of visits to each of the valid airports.
+    :param engine_number: (int) of the datu, in question
+    :param lower_limit: (int) represents the least number of flights one needs before deeming an airport significant.
+    :return:
+    """
     top_airports_from, _ = top_airport_dict(engine_number, lower_limit)
-    n_i = [(top_airports_from[airport_code] if (airport_code in top_airports_from) else 0) for airport_code in VALID_AIRPORTS]
+    n_i = [
+        (top_airports_from[airport_code] if (airport_code in top_airports_from) else 0)
+        for airport_code in VALID_AIRPORTS
+    ]
 
     if s_i := sum(n_i):
         n_i = list(np.array(n_i) / s_i)
@@ -85,6 +103,11 @@ def generate_n_i(engine_number: int, lower_limit: int = 100) -> typing.Optional[
 
 
 def generate_a(lower_limit: int = 100):
+    """
+    Generates the linear system's matrix, A.
+    :param lower_limit: (int) represents the least number of flights one needs before deeming an airport significant.
+    :return:
+    """
     a = np.kron(generate_n_i(1, lower_limit), np.eye(5, dtype=int))  # could be shite
     for i in range(NO_ENGINES - 1):
         if (n_i := generate_n_i(i+2, lower_limit)) is not None:
@@ -94,6 +117,10 @@ def generate_a(lower_limit: int = 100):
 
 
 def generate_y() -> np.ndarray:
+    """
+    Generates the linear system's b vector (Ax=b) out of all the given engine data.
+    :return:
+    """
     y_pure_data = Y_DATA.drop('Engine No', axis='columns')
     y_pure_data = y_pure_data.to_numpy()
     y = np.atleast_2d(y_pure_data.flatten("C")).T
@@ -101,19 +128,18 @@ def generate_y() -> np.ndarray:
 
 
 print(DATA['Engine No'].value_counts())
-
 warnings.filterwarnings('ignore', '', FutureWarning)
 
 A = generate_a(lower_limit=LOWER_LIMIT)
 b = generate_y()
 
 print("Shape of A:")
-print(A.shape, A.sum(axis=1)) # check if summed to 1?
+print(A.shape, A.sum(axis=1))
 
-plt.title("Structure of A (Elements)")
-plt.imshow(A)
-plt.colorbar()
-plt.show()
+# plt.title("Structure of A (Elements)")
+# plt.imshow(A)
+# plt.colorbar()
+# plt.show()
 
 mask = GROUND_TRUTH['Airports'].isin(VALID_AIRPORTS)
 x_pure_data = GROUND_TRUTH[mask]
@@ -122,20 +148,24 @@ x_pure_data = x_pure_data.to_numpy()
 
 # Section: Pseudo-inverse approach
 
+# This generates a solution that minimises \|Ax-b\|_2 but doesn't necessarily meet the constraints that we require. This
+# is however a reasonable guess at the optimal solution given the constraints and we can use this as an initial
+# condition in a constrained optimisation solver.
+
 x_out = np.linalg.pinv(A) @ b
 x = np.atleast_2d(x_out).reshape((-1, 5), order="C")
 
-print("x vector:", x)
-
-
-plt.imshow(np.abs(x - x_pure_data))
-plt.colorbar()
-plt.show()
-
-print(np.linalg.norm(x - x_pure_data))
-
+# plt.title("Pseudo-inverse Solution: \nabsolute errors [%]")
+# plt.xticks(range(5), ["C", "M", "A", "S", "O"])
+# plt.yticks(range(len(VALID_AIRPORTS)), VALID_AIRPORTS)
+# plt.imshow(np.abs(x - x_pure_data))
+# plt.colorbar()
+# plt.show()
 
 # Section: Constrained optimisation approach
+
+# This solution takes in the pseudo-inverse solution as an initial condition and contrains the optimisation of the same
+# loss function.
 
 NO_VALID_AIRPORTS = len(VALID_AIRPORTS)
 
@@ -144,29 +174,82 @@ eq_cons = [{'type': 'eq', 'fun': lambda _x: _x[5 * j] + _x[5 * j + 1] + _x[5 * j
 ineq_cons = [{'type': 'ineq', 'fun': lambda _x: _x[i]} for i in range(5 * NO_VALID_AIRPORTS)]
 cons = tuple(eq_cons + ineq_cons)
 
-# x_0 = 20 * np.ones((5 * NO_VALID_AIRPORTS, 1), dtype=float)
 x_0 = x_out
 
 statement = lambda _x: np.linalg.norm(A @ _x - b) ** 2
-statement_jac = lambda _x: 2.0 * A.T @ A @ _x - 2.0 * A.T @ b
-
 bounds = tuple([(0, 100) for _ in range(5 * NO_VALID_AIRPORTS)])
-
-# res = so.minimize(statement, x_0, method='SLSQP', jac=statement_jac,
-#                   constraints=[ineq_cons, eq_cons],
-#                   options={'ftol': 1e-9, 'disp': True, 'verbose': 1})
 res = so.minimize(statement, x_0, bounds=bounds, constraints=cons)
 
 x = res.x
 x = np.atleast_2d(x).reshape((-1, 5), order="C")
 
+abs_errors = np.abs(x - x_pure_data)
 
-plt.yticks(np.arange(1, 20, 1.0))
-plt.yticks(np.arange(1, 20, 1.0))
-plt.xlabel("Dust concentration types")
-plt.ylabel("Airports (20)")
-plt.imshow(np.abs(x - x_pure_data))
-plt.colorbar()
+
+fig = plt.figure(layout="constrained")
+subfigs = fig.subfigures(1, 2, wspace=0.07, width_ratios=[0.5, 1.])
+
+
+axs0 = subfigs[1].subplots(2, 2)
+
+subfigs[1].suptitle('EPDFs of the Errors')
+
+c_cont = abs_errors[:, 0]
+m_cont = abs_errors[:, 1]
+a_cont = abs_errors[:, 2]
+s_cont = abs_errors[:, 3]
+
+kdec = sm.nonparametric.KDEUnivariate(c_cont)
+kdec.fit(clip=(0, np.inf))
+
+axs0[0, 0].hist(c_cont, density=True, bins=15, alpha=0.5, color="#D58817")
+axs0[0, 0].plot(kdec.support, kdec.density, color="#5AB4DC")
+axs0[0, 0].annotate("C", xy=(1, 1), color="green", style="italic")
+
+
+kdem = sm.nonparametric.KDEUnivariate(m_cont)
+kdem.fit(clip=(0, np.inf))
+
+axs0[0, 1].hist(m_cont, density=True, bins=15, alpha=0.5, color="#D58817")
+axs0[0, 1].plot(kdem.support, kdem.density, color="#5AB4DC")
+axs0[0, 1].annotate("M", xy=(1, 1), color="green", style="italic")
+
+
+kdea = sm.nonparametric.KDEUnivariate(a_cont)
+kdea.fit(clip=(0, np.inf))
+
+axs0[1, 0].hist(a_cont, density=True, bins=15, alpha=0.5, color="#D58817")
+axs0[1, 0].plot(kdea.support, kdea.density, color="#5AB4DC")
+axs0[1, 0].annotate("A", xy=(1, 1), color="green", style="italic")
+
+
+kdes = sm.nonparametric.KDEUnivariate(s_cont)
+kdes.fit(clip=(0, np.inf))
+
+axs0[1, 1].hist(s_cont, density=True, bins=15, alpha=0.5, color="#D58817")
+axs0[1, 1].plot(kdes.support, kdes.density, color="#5AB4DC")
+axs0[1, 1].annotate("S", xy=(1, 1), color="green", style="italic")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+axs1 = subfigs[0].subplots(1, 1)
+subfigs[0].supylabel('Airports')
+
+axs1.set_title("Contrained Optimisation Solution: \nabsolute errors [%]")
+axs1.set_xticks(range(5), ["C", "M", "A", "S", "O"])
+axs1.set_yticks(range(len(VALID_AIRPORTS)), VALID_AIRPORTS)
+image = axs1.imshow(abs_errors)
+subfigs[0].colorbar(image)
+
 plt.show()
-
-print(np.linalg.norm(x - x_pure_data))
