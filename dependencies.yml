@@ -1,0 +1,15 @@
+name: my_env_project
+dependencies:
+  - numpy
+  - pandas
+  - matplotlib
+  - arviz
+  - scipy
+  - statsmodels
+  - pymc
+
+  - sys
+  - warnings
+  - typing
+  
+

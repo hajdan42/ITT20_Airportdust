@@ -15,7 +15,10 @@ Main files:
 
 
 ## Libraries
-In this project, a number of Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas, scipy etc) 
+In this project, a number of Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas etc).
+A few crucial ones for implementing the methods include:
+- scipy and statmodels - both helped in the overlap.py and limit_data.py when forming the least-squares method
+- pymc - used primarily for the bayesian approach with the sampling for the posterior distribution
 
 ## Interface instructions
 To create the conda environment one can install it via a dependencies file command:
