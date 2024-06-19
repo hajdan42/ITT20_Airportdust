@@ -16,7 +16,13 @@ Main files:
 
 
 ## Libraries
-In this project, several Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas, scipy etc) 
+In this project, several Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas etc) 
+
+
+Some libraries were used in particular for the methods:
+- scipy and statsmodels - used in overlap.py and limit_data.py to implement the least-squares method and generate the error pdf plots for the 4 oxides
+- pymc - used primarily for the Bayesian approaches
+
 
 ## Interface instructions
 To create the conda environment one can install it via a dependencies file command:
