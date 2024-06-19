@@ -1,4 +1,4 @@
-# -Integrative Think Tank 20 (ITT 20) (
+# -Integrative Think Tank 20 (ITT 20)
 For more information on how ITTs work see https://samba.ac.uk/working-with-samba/integrative-think-tanks-itts/.
 # Reverse engineering atompsheric dust from aircraft engine samples (Finding airport dust composition)
 This folder consists of group work done during ITT 20 from June 10th-14th 2024. The challenge was determining mathematical methods to predict airport dust composite concentration based off 20 decomissioned aircraft engines and their final dust composite concentrations. For more detail see the ITT 20 reports.
@@ -16,7 +16,7 @@ Main files:
 
 
 ## Libraries
-In this project, a number of Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas, scipy etc) 
+In this project, several Python libraries were used for model construction, mathematical calculations, plotting and data manipulation (including the standard numpy, matplotlib, pandas, scipy etc) 
 
 ## Interface instructions
 To create the conda environment one can install it via a dependencies file command:
