@@ -35,7 +35,7 @@ python linear_systems/limit_data.py
 or using coding editors such as VSC to run the individual files. 
 
 # Acknowledgements
-This was part of a group working at ITT 20 with Amin Sabir, Bill Nunn, Daniel Hajnal and Matt Evans. In addition, Dr Theresa Smith, Dr Sergey Dolgov and Dr Matt Nunes helped out massively with insightful discussions about methods to implement and how they would work. The ITT 20 partner Rolls-Royce Holdings was very helpful in proposing this challenge in the first place, dataset for use and helping to answer any queries.
+This was part of a group working at ITT 20 with Amin Sabir, Bill Nunn, Daniel Hajnal and Matt Evans. In addition, Dr Theresa Smith, Dr Sergey Dolgov and Prof Matt Nunes helped out massively with insightful discussions about methods to implement and how they would work. The ITT 20 partner Rolls-Royce Holdings was very helpful in proposing this challenge in the first place, dataset for use and helping to answer any queries.
 
 This project was part of the ITT20 and the 1st year (MRes) for statistical applied mathematics at the University of Bath (SAMBa) PhD programme.
 
