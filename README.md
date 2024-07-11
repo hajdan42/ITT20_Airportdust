@@ -12,7 +12,10 @@ This folder consists of group work done during ITT 20 from June 10th-14th 2024. 
 Main files:
 - overlap.py - solving the linear_systems approach with the least-squares and constrained optimisation approaches
 - limit_data.py - an extension of overlap.py with the full methods and their descriptions with the plots (heatmap of the absolute error between the dust types predictions and ground truth and the respective error pdf plots)
-- flight_toy_one, flight_toy_two_one, flight_toy_two_two Jupyter notebooks - Bayesian approach in action on the toy problems
+- flight_toy_one, flight_toy_two_one, flight_toy_two_two Jupyter notebooks - Bayesian approach in action on the toy problems to estimate the posterior distribution of the airport dust type concentrations
+   - flight_toy_one - the simplest toy example explored with 4 airports with 2 engines flying between them
+   - flight_toy_two_one - two engines between three airports (no airport dust type concentration is known)
+   - flight_toy_two_two - two engines between three airports with one airport's dust type concentration known
 
 
 ## Libraries
